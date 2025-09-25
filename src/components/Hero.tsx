@@ -35,9 +35,9 @@ const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button variant="hero" size="lg" className="group">
-                <a href="/dashboard" className="flex items-center">
-                  Começar Grátis
+              <Button variant="default" size="lg" className="group gradient-primary">
+                <a href="/choose-template" className="flex items-center">
+                  Escolher Template
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </a>
               </Button>
