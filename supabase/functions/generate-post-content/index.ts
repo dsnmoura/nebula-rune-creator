@@ -8,16 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Available AI models on OpenRouter
-const availableModels = {
-  'gpt-4o': { name: 'GPT-4o (OpenAI)', maxTokens: 4000 },
-  'gpt-4o-mini': { name: 'GPT-4o Mini (OpenAI)', maxTokens: 4000 },
-  'claude-3-5-sonnet-20241022': { name: 'Claude 3.5 Sonnet (Anthropic)', maxTokens: 4000 },
-  'claude-3-5-haiku-20241022': { name: 'Claude 3.5 Haiku (Anthropic)', maxTokens: 4000 },
-  'llama-3.1-405b-instruct': { name: 'Llama 3.1 405B (Meta)', maxTokens: 4000 },
-  'llama-3.1-70b-instruct': { name: 'Llama 3.1 70B (Meta)', maxTokens: 4000 },
-  'gemini-pro-1.5': { name: 'Gemini Pro 1.5 (Google)', maxTokens: 4000 },
-};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -31,11 +21,12 @@ serve(async (req) => {
       network, 
       template, 
       theme, 
-      model = 'gpt-4o-mini',
       generateImages = true,
       generateCaption = true,
       generateHashtags = true
     } = await req.json();
+
+    const model = 'gpt-4o-mini'; // Modelo fixo
 
     console.log('Generating post content:', { objective, network, template, theme, model });
 
@@ -94,7 +85,7 @@ Diretrizes importantes:
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Crie o conteúdo para: ${theme}` }
         ],
-        max_tokens: (availableModels as any)[model]?.maxTokens || 4000,
+        max_tokens: 4000,
         temperature: 0.7,
       }),
     });

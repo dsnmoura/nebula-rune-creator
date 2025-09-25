@@ -23,7 +23,6 @@ import {
   PenTool,
   Lightbulb,
   Sparkles,
-  Bot,
   Settings,
   Download,
   Copy,
@@ -31,14 +30,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CreatePost = () => {
   const [selectedObjective, setSelectedObjective] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [postTheme, setPostTheme] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generatedContent, setGeneratedContent] = useState<any>(null);
   const [copiedHashtags, setCopiedHashtags] = useState<boolean>(false);
@@ -161,14 +158,6 @@ const CreatePost = () => {
     return templates[networkId as keyof typeof templates] || [];
   };
 
-  const availableModels = [
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Rápido & Econômico)', description: 'Ideal para a maioria dos casos' },
-    { id: 'gpt-4o', name: 'GPT-4o (Premium)', description: 'Mais criativo e detalhado' },
-    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', description: 'Excelente para textos longos' },
-    { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', description: 'Rápido e eficiente' },
-    { id: 'llama-3.1-70b-instruct', name: 'Llama 3.1 70B', description: 'Open source poderoso' },
-    { id: 'gemini-pro-1.5', name: 'Gemini Pro 1.5', description: 'Google AI avançado' },
-  ];
 
   const themeExamples = [
     "Promoção de Black Friday - desconto especial para clientes",
@@ -192,7 +181,6 @@ const CreatePost = () => {
           network: selectedNetwork,
           template: selectedTemplate,
           theme: postTheme,
-          model: selectedModel,
           generateImages: true,
           generateCaption: true,
           generateHashtags: true
@@ -439,37 +427,6 @@ const CreatePost = () => {
         </Card>
       )}
 
-      {/* Seleção de Modelo IA */}
-      {selectedObjective && selectedNetwork && selectedTemplate && postTheme.length >= 20 && (
-        <Card className="animate-fade-in">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              Escolha o modelo de IA
-            </CardTitle>
-            <CardDescription>
-              Diferentes modelos têm características únicas. Escolha o que melhor se adapta ao seu conteúdo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione um modelo de IA" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableModels.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{model.name}</span>
-                      <span className="text-xs text-muted-foreground">{model.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Botão de Geração */}
       {selectedObjective && selectedNetwork && selectedTemplate && postTheme.length >= 20 && (
@@ -505,7 +462,7 @@ const CreatePost = () => {
                 Conteúdo Gerado com Sucesso!
               </CardTitle>
               <CardDescription>
-                Modelo usado: {availableModels.find(m => m.id === selectedModel)?.name}
+                Conteúdo gerado automaticamente com IA
               </CardDescription>
             </CardHeader>
           </Card>
