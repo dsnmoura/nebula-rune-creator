@@ -22,14 +22,27 @@ import {
   Camera,
   PenTool,
   Lightbulb,
-  Sparkles
+  Sparkles,
+  Bot,
+  Settings,
+  Download,
+  Copy,
+  Check
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CreatePost = () => {
   const [selectedObjective, setSelectedObjective] = useState<string>("");
   const [selectedNetwork, setSelectedNetwork] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [postTheme, setPostTheme] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [generatedContent, setGeneratedContent] = useState<any>(null);
+  const [copiedHashtags, setCopiedHashtags] = useState<boolean>(false);
+  const [copiedCaption, setCopiedCaption] = useState<boolean>(false);
 
   const objectives = [
     { id: "promocao", name: "Promoção", icon: Gift, color: "bg-red-500" },
@@ -148,6 +161,15 @@ const CreatePost = () => {
     return templates[networkId as keyof typeof templates] || [];
   };
 
+  const availableModels = [
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Rápido & Econômico)', description: 'Ideal para a maioria dos casos' },
+    { id: 'gpt-4o', name: 'GPT-4o (Premium)', description: 'Mais criativo e detalhado' },
+    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', description: 'Excelente para textos longos' },
+    { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', description: 'Rápido e eficiente' },
+    { id: 'llama-3.1-70b-instruct', name: 'Llama 3.1 70B', description: 'Open source poderoso' },
+    { id: 'gemini-pro-1.5', name: 'Gemini Pro 1.5', description: 'Google AI avançado' },
+  ];
+
   const themeExamples = [
     "Promoção de Black Friday - desconto especial para clientes",
     "Dica para melhorar produtividade no trabalho remoto",
@@ -155,6 +177,59 @@ const CreatePost = () => {
     "Depoimento de cliente satisfeito com nosso serviço",
     "Tutorial passo a passo sobre nossa especialidade"
   ];
+
+  const generateContent = async () => {
+    if (!selectedObjective || !selectedNetwork || !selectedTemplate || !postTheme) {
+      toast.error("Preencha todos os campos antes de gerar o conteúdo");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-post-content', {
+        body: {
+          objective: selectedObjective,
+          network: selectedNetwork,
+          template: selectedTemplate,
+          theme: postTheme,
+          model: selectedModel,
+          generateImages: true,
+          generateCaption: true,
+          generateHashtags: true
+        }
+      });
+
+      if (error) {
+        console.error('Error generating content:', error);
+        toast.error("Erro ao gerar conteúdo. Tente novamente.");
+        return;
+      }
+
+      setGeneratedContent(data);
+      toast.success("Conteúdo gerado com sucesso!");
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Erro ao gerar conteúdo. Tente novamente.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string, type: 'caption' | 'hashtags') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'caption') {
+        setCopiedCaption(true);
+        setTimeout(() => setCopiedCaption(false), 2000);
+      } else {
+        setCopiedHashtags(true);
+        setTimeout(() => setCopiedHashtags(false), 2000);
+      }
+      toast.success(`${type === 'caption' ? 'Legenda' : 'Hashtags'} copiada${type === 'hashtags' ? 's' : ''} para a área de transferência!`);
+    } catch (error) {
+      toast.error("Erro ao copiar texto");
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -364,13 +439,204 @@ const CreatePost = () => {
         </Card>
       )}
 
-      {/* Botão de Próximo Passo */}
+      {/* Seleção de Modelo IA */}
+      {selectedObjective && selectedNetwork && selectedTemplate && postTheme.length >= 20 && (
+        <Card className="animate-fade-in">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              Escolha o modelo de IA
+            </CardTitle>
+            <CardDescription>
+              Diferentes modelos têm características únicas. Escolha o que melhor se adapta ao seu conteúdo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione um modelo de IA" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{model.name}</span>
+                      <span className="text-xs text-muted-foreground">{model.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Botão de Geração */}
       {selectedObjective && selectedNetwork && selectedTemplate && postTheme.length >= 20 && (
         <div className="flex justify-center animate-fade-in">
-          <Button size="lg" className="px-8">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Gerar Conteúdo com IA
+          <Button 
+            size="lg" 
+            className="px-8" 
+            onClick={generateContent}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <Settings className="h-4 w-4 mr-2 animate-spin" />
+                Gerando Conteúdo...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Gerar Conteúdo com IA
+              </>
+            )}
           </Button>
+        </div>
+      )}
+
+      {/* Conteúdo Gerado */}
+      {generatedContent && (
+        <div className="space-y-6 animate-fade-in">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Conteúdo Gerado com Sucesso!
+              </CardTitle>
+              <CardDescription>
+                Modelo usado: {availableModels.find(m => m.id === selectedModel)?.name}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          {/* Carrossel de Imagens */}
+          {generatedContent.generated_images && generatedContent.generated_images.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Image className="h-5 w-5" />
+                  Carrossel de Imagens ({generatedContent.generated_images.length} imagens)
+                </CardTitle>
+                <CardDescription>
+                  Imagens geradas automaticamente para seu carrossel
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {generatedContent.generated_images.map((image: any, index: number) => (
+                    <div key={index} className="space-y-2">
+                      <div className="aspect-square rounded-lg overflow-hidden border">
+                        {image.url && (
+                          <img 
+                            src={image.url} 
+                            alt={`Imagem do carrossel ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        {image.b64_json && !image.url && (
+                          <img 
+                            src={`data:image/png;base64,${image.b64_json}`} 
+                            alt={`Imagem do carrossel ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Slide {index + 1}</span>
+                        <Button size="sm" variant="outline">
+                          <Download className="h-3 w-3 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Legenda */}
+          {generatedContent.caption && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Legenda do Post
+                </CardTitle>
+                <CardDescription>
+                  Texto engajante e persuasivo para sua publicação
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="whitespace-pre-wrap">{generatedContent.caption}</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => copyToClipboard(generatedContent.caption, 'caption')}
+                    className="w-full"
+                  >
+                    {copiedCaption ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Copiado!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar Legenda
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Hashtags */}
+          {generatedContent.hashtags && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Hashtags Otimizadas
+                </CardTitle>
+                <CardDescription>
+                  Hashtags relevantes e estratégicas para maximizar o alcance
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {generatedContent.hashtags.map((hashtag: string, index: number) => (
+                      <Badge key={index} variant="secondary" className="text-sm">
+                        {hashtag.startsWith('#') ? hashtag : `#${hashtag}`}
+                      </Badge>
+                    ))}
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => copyToClipboard(generatedContent.hashtags.map((h: string) => h.startsWith('#') ? h : `#${h}`).join(' '), 'hashtags')}
+                    className="w-full"
+                  >
+                    {copiedHashtags ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Copiado!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar Hashtags
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>
