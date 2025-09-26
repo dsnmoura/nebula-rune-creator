@@ -64,6 +64,29 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        'inter': ['Inter', 'sans-serif'],
+        'roboto': ['Roboto', 'sans-serif'],
+        'playfair': ['Playfair Display', 'serif'],
+        'montserrat': ['Montserrat', 'sans-serif'],
+        'open-sans': ['Open Sans', 'sans-serif'],
+        'poppins': ['Poppins', 'sans-serif'],
+        'lato': ['Lato', 'sans-serif'],
+        'source-sans': ['Source Sans Pro', 'sans-serif'],
+      },
+      scale: {
+        '102': '1.02',
+      },
+      transitionProperty: {
+        'smooth': 'all',
+      },
+      transitionTimingFunction: {
+        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      boxShadow: {
+        'card': '0 10px 30px -10px hsl(var(--primary) / 0.1)',
+        'glow': '0 0 40px hsl(var(--primary-glow) / 0.4)',
+      },
       keyframes: {
         "accordion-down": {
           from: {

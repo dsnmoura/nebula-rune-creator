@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { 
   Instagram, 
@@ -26,8 +27,11 @@ import {
   Settings,
   Download,
   Copy,
-  Check
+  Check,
+  Palette,
+  Wand2
 } from "lucide-react";
+import TemplateCustomizer from "@/components/TemplateCustomizer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -40,6 +44,8 @@ const CreatePost = () => {
   const [generatedContent, setGeneratedContent] = useState<any>(null);
   const [copiedHashtags, setCopiedHashtags] = useState<boolean>(false);
   const [copiedCaption, setCopiedCaption] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("create");
+  const [customizationSettings, setCustomizationSettings] = useState<any>(null);
 
   const objectives = [
     { id: "promocao", name: "Promoção", icon: Gift, color: "bg-red-500" },
@@ -219,14 +225,34 @@ const CreatePost = () => {
     }
   };
 
+  const handleCustomizationSave = (settings: any) => {
+    setCustomizationSettings(settings);
+    toast.success("Personalização aplicada com sucesso!");
+  };
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Criar Post</h1>
         <p className="text-muted-foreground">
-          Crie conteúdo impactante para suas redes sociais
+          Crie conteúdo impactante para suas redes sociais com personalização completa
         </p>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="create" className="flex items-center gap-2">
+            <Wand2 className="h-4 w-4" />
+            Gerar Conteúdo
+          </TabsTrigger>
+          <TabsTrigger value="customize" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Personalizar Template
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="create" className="space-y-8 mt-6">
+          {/* Conteúdo de criação existente aqui */}
 
       {/* Seleção do Objetivo */}
       <Card>
@@ -596,6 +622,15 @@ const CreatePost = () => {
           )}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="customize" className="space-y-6 mt-6">
+          <TemplateCustomizer 
+            templateData={selectedTemplate ? { id: selectedTemplate, network: selectedNetwork } : null}
+            onSave={handleCustomizationSave}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
